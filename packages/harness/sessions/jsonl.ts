@@ -1,6 +1,6 @@
 import { mkdir, open, readdir, readFile, stat, truncate } from "node:fs/promises";
 import { join } from "node:path";
-import { checkEntries, journalSession, type Entry, type Journal, type Session } from "../../src/index.ts";
+import { checkEntries, journalSession, type Entry, type Journal, type Session } from "@aum/core";
 
 // A Journal that writes each entry to a file as one JSON line. journalSession (src/session.ts)
 // decides the order of writes; this file only knows about the file.

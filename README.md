@@ -272,14 +272,26 @@ it in the assistant message's `adapterData`, under their own key.
 
 ## Packages
 
-`packages/` holds pieces that plug into the core. The core still has no runtime dependencies;
-each package declares its own.
+aum ships as four packages, one per kind of user. Dependencies point only toward the core.
 
-| Package | What it does |
+| Package | Folder | Status | What it is |
+| --- | --- | --- | --- |
+| `@aum/core` | `src/` | here | The loop, sessions, messages, and the tool and model ports. No runtime dependencies. |
+| `@aum/harness` | `packages/harness` | here, growing | An agent framework on the core, usable directly or built on. Ships with every model family [Pi](https://github.com/earendil-works/pi/tree/main/packages/ai) offers (42, pinned to `@earendil-works/pi-ai` 1.4.0), the coding tools and saved sessions. |
+| `@aum/cli` | | phase 2 | The coding agent for the terminal, built only on the harness. |
+| `@aum/app` | | phase 3 | The desktop app, after the CLI ships. |
+
+What the harness holds today:
+
+| Import | What it does |
 | --- | --- |
-| `providers-pi` | Every model family [Pi](https://github.com/earendil-works/pi/tree/main/packages/ai) ships (42), behind `Model`. `PiCatalog` lists families and models and loads one by `<family>/<model>`, with reasoning at medium unless you pick another level. Pinned to `@earendil-works/pi-ai` 1.4.0. |
-| `tools-coding` | `read`, `write`, `edit` and `bash`, confined to one workspace folder. `createCodingTools(root)` returns all four. |
-| `session-jsonl` | Sessions saved as JSONL files that survive a crash: `openSession(dir, id)` plugs into `Agent`. |
+| `@aum/harness/providers/pi` | `PiCatalog` lists families and models and loads one by `<family>/<model>`, with reasoning at medium unless you pick another level. `createPiModel` wraps one Pi model as a `Model`. |
+| `@aum/harness/tools/coding` | `read`, `write`, `edit` and `bash`, confined to one workspace folder. `createCodingTools(root)` returns all four. |
+| `@aum/harness/sessions/jsonl` | Sessions saved as JSONL files that survive a crash: `openSession(dir, id)` plugs into `Agent`. |
+
+Code imports by package name, never by path into another package. In this repo, scripts run Node
+with `--conditions=development`, which points each name at its TypeScript source, so nothing needs
+building to run or test; once installed, the same names resolve to the built `dist/` files.
 
 `apps/demo.ts` wires them to `Agent` in about a hundred lines, to try the loop against real models.
 It reads an OpenAI key from `LLM_API_KEY` in `.env` (gitignored) and starts on `openai/gpt-5-mini`
@@ -307,6 +319,6 @@ Sessions are saved in `.aum/sessions/`. The system prompt comes from `prompts/co
 ## Scripts
 
 - `npm run typecheck`: check types across the core, packages, apps and checks, without writing output.
-- `npm run build`: compile the core (`src/`) into `dist/`: JavaScript, type declarations and source maps.
-- `npm test`: run the offline checks in `checks/` (Pi's faux provider stands in for a real model).
+- `npm run build`: compile the core and the harness into their `dist/` folders, in dependency order: JavaScript, type declarations and source maps.
+- `npm test`: run the offline checks in `checks/` (Pi's faux provider stands in for a real model), including one that packs the packages, installs them into an empty project outside the repo and runs them as plain JavaScript.
 - `npm run demo`: try the core loop with a Pi model and the coding tools.

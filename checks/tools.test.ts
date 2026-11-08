@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import { chmod, mkdir, readdir, readFile, stat, symlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, test } from "node:test";
-import { invokeTool, type Tool } from "../src/index.ts";
-import { createCodingTools } from "../packages/tools-coding/index.ts";
+import { invokeTool, type Tool } from "@aum/core";
+import { createCodingTools } from "@aum/harness/tools/coding";
 import { outputOf, scratch } from "./support.ts";
 
 async function workspace() {

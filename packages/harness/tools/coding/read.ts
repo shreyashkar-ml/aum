@@ -1,6 +1,6 @@
 import { readFile, stat } from "node:fs/promises";
 import { extname } from "node:path";
-import { defineTool, text, type Tool } from "../../src/index.ts";
+import { defineTool, text, type Tool } from "@aum/core";
 import { Args } from "./args.ts";
 import type { Workspace } from "./workspace.ts";
 

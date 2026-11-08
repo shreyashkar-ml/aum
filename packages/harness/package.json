@@ -1,0 +1,32 @@
+{
+  "name": "@aum/harness",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "An agent framework on @aum/core, with every Pi model family, coding tools and saved sessions built in.",
+  "exports": {
+    "./providers/pi": {
+      "development": "./providers/pi/index.ts",
+      "types": "./dist/providers/pi/index.d.ts",
+      "default": "./dist/providers/pi/index.js"
+    },
+    "./tools/coding": {
+      "development": "./tools/coding/index.ts",
+      "types": "./dist/tools/coding/index.d.ts",
+      "default": "./dist/tools/coding/index.js"
+    },
+    "./*": {
+      "development": "./*.ts",
+      "types": "./dist/*.d.ts",
+      "default": "./dist/*.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@earendil-works/pi-ai": "1.4.0"
+  },
+  "peerDependencies": {
+    "@aum/core": "0.1.0"
+  }
+}

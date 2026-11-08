@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import { setTimeout as delay } from "node:timers/promises";
-import { defineTool, ToolError, type Tool } from "../../src/index.ts";
+import { defineTool, ToolError, type Tool } from "@aum/core";
 import { Args } from "./args.ts";
 import type { Workspace } from "./workspace.ts";
 

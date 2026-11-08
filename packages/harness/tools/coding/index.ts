@@ -1,4 +1,4 @@
-import type { Tool } from "../../src/index.ts";
+import type { Tool } from "@aum/core";
 import { createBashTool, type BashOptions } from "./bash.ts";
 import { createEditTool } from "./edit.ts";
 import { createReadTool } from "./read.ts";

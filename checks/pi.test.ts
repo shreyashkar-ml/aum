@@ -4,8 +4,8 @@ import {
     createModels, fauxAssistantMessage, fauxProvider, fauxText, fauxThinking, fauxToolCall,
     type Message as PiMessage, type TranscriptContext,
 } from "@earendil-works/pi-ai";
-import { MemorySession, bind, defineTool, lineageContext, rules, runAgent, userMessage, type Bindings, type Model } from "../src/index.ts";
-import { PiCatalog, createPiModel } from "../packages/providers-pi/index.ts";
+import { MemorySession, bind, defineTool, lineageContext, rules, runAgent, userMessage, type Bindings, type Model } from "@aum/core";
+import { PiCatalog, createPiModel } from "@aum/harness/providers/pi";
 
 // Pi's faux provider streams scripted replies through Pi's real request path, so these checks
 // cover the codec and Pi's handling of it with no network and no key.

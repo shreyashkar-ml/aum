@@ -5,7 +5,7 @@ import type {
 import {
     ModelError, type AssistantMessage, type Content, type FinishReason, type Json, type JsonObject,
     type ModelCompletion, type ModelRequest, type ToolResultBlock,
-} from "../../src/index.ts";
+} from "@aum/core";
 
 // Converts between aum's messages and Pi's. aum's messages are what the session saves, and they
 // have no room for a model's reasoning or for the signatures some providers attach to replies.

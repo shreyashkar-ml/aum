@@ -1,6 +1,6 @@
 import { mkdir, stat } from "node:fs/promises";
 import { dirname } from "node:path";
-import { defineTool, type Tool } from "../../src/index.ts";
+import { defineTool, type Tool } from "@aum/core";
 import { Args } from "./args.ts";
 import { writeAtomic, type Workspace } from "./workspace.ts";
 

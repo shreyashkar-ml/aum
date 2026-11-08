@@ -2,7 +2,7 @@ import {
     isContextOverflow, isRetryableAssistantError,
     type Api, type AssistantMessage as PiAssistant, type Model as PiModel, type Models, type ThinkingLevel,
 } from "@earendil-works/pi-ai";
-import { ModelError, type Model } from "../../src/index.ts";
+import { ModelError, type Model } from "@aum/core";
 import { decode, encode } from "./codec.ts";
 
 export type PiModelOptions = {

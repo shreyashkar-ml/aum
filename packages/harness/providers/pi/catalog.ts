@@ -1,6 +1,6 @@
 import type { Api, Model as PiModel, MutableModels, ThinkingLevel } from "@earendil-works/pi-ai";
 import { builtinModels } from "@earendil-works/pi-ai/providers/all";
-import type { Model } from "../../src/index.ts";
+import type { Model } from "@aum/core";
 import { createPiModel } from "./model.ts";
 
 // Every model family Pi ships, read from Pi's own catalog, so none has to be named in advance.

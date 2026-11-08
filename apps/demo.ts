@@ -2,13 +2,13 @@ import { readFile } from "node:fs/promises";
 import { stdin, stdout } from "node:process";
 import { createInterface } from "node:readline";
 import { parseArgs } from "node:util";
-import { Agent, bind, lineageContext, rules, textOf, type AgentEvent, type Json, type Model, type RunHandle, type ToolUseBlock } from "../src/index.ts";
-import { PiCatalog, REASONING, type Reasoning } from "../packages/providers-pi/index.ts";
-import { newSessionId, openSession } from "../packages/session-jsonl/index.ts";
-import { createCodingTools } from "../packages/tools-coding/index.ts";
+import { Agent, bind, lineageContext, rules, textOf, type AgentEvent, type Json, type Model, type RunHandle, type ToolUseBlock } from "@aum/core";
+import { PiCatalog, REASONING, type Reasoning } from "@aum/harness/providers/pi";
+import { newSessionId, openSession } from "@aum/harness/sessions/jsonl";
+import { createCodingTools } from "@aum/harness/tools/coding";
 
-// A small playground for the core loop with real models. Pi supplies the model, tools-coding
-// the tools, session-jsonl the saved conversation; everything else is src/ as it is.
+// A small playground for the core loop with real models. @aum/harness supplies the Pi model,
+// the coding tools and the saved conversation; everything else is @aum/core (src/) as it is.
 //
 //   npm run demo -- --list                       model families, and which have credentials
 //   npm run demo -- --list anthropic             that family's models

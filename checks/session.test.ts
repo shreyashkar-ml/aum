@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { appendFile } from "node:fs/promises";
 import { join } from "node:path";
 import { test } from "node:test";
-import { listSessions, openSession } from "../packages/session-jsonl/index.ts";
+import { listSessions, openSession } from "@aum/harness/sessions/jsonl";
 import { scratch } from "./support.ts";
 
 test("a session file cut off mid-line still loads", async () => {

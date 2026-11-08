@@ -1,8 +1,20 @@
 {
-  "extends": "./tsconfig.json",
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "rootDir": ".",
-    "noEmit": true
+    "noEmit": true,
+    "customConditions": [
+      "development"
+    ]
   },
-  "include": ["src/**/*.ts", "packages/**/*.ts", "apps/**/*.ts", "checks/**/*.ts"]
+  "include": [
+    "src/**/*.ts",
+    "packages/**/*.ts",
+    "apps/**/*.ts",
+    "checks/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/dist"
+  ]
 }

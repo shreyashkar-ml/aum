@@ -1,23 +1,33 @@
 {
-  "name": "aum",
-  "version": "0.0.0",
-  "private": true,
+  "name": "@aum/core",
+  "version": "0.1.0",
   "type": "module",
-  "description": "A minimal, extensible agent framework.",
+  "description": "The aum agent framework: the loop, sessions, and the tool and model ports. No runtime dependencies.",
   "engines": {
     "node": ">=22.18.0"
   },
+  "exports": {
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.workspace.json",
-    "build": "tsc",
-    "test": "node --test \"checks/*.test.ts\"",
-    "demo": "node apps/demo.ts"
+    "build": "tsc -b tsconfig.build.json",
+    "test": "node --conditions=development --test \"checks/*.test.ts\"",
+    "demo": "node --conditions=development apps/demo.ts"
   },
   "devDependencies": {
     "@types/node": "^22.20.2",
-    "typescript": "^7.0.2"
-  },
-  "workspaces": [
-    "packages/*"
-  ]
+    "typescript": "^7.0.2",
+    "@aum/core": "file:."
+  }
 }
