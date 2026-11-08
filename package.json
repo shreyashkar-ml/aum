@@ -8,11 +8,16 @@
     "node": ">=22.18.0"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit",
-    "build": "tsc"
+    "typecheck": "tsc --noEmit -p tsconfig.workspace.json",
+    "build": "tsc",
+    "test": "node --test \"checks/*.test.ts\"",
+    "demo": "node apps/demo.ts"
   },
   "devDependencies": {
     "@types/node": "^22.20.2",
     "typescript": "^7.0.2"
-  }
+  },
+  "workspaces": [
+    "packages/*"
+  ]
 }

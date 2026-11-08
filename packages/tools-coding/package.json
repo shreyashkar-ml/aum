@@ -1,0 +1,10 @@
+{
+  "name": "@aum/tools-coding",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Read, write, edit and bash tools confined to one workspace.",
+  "exports": {
+    ".": "./index.ts"
+  }
+}

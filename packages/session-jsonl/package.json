@@ -1,0 +1,10 @@
+{
+  "name": "@aum/session-jsonl",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Sessions saved as JSONL files that survive a crash.",
+  "exports": {
+    ".": "./index.ts"
+  }
+}
