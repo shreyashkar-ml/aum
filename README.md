@@ -3,9 +3,13 @@
 A small TypeScript framework for building agents: a model that can ask for tools to be run.
 
 aum runs the loop. It sends the conversation to the model, saves its reply, runs the tools it
-asked for, saves the results, and repeats until the model answers. You bring the model
-provider and, if you want sessions that survive a restart, the storage. There are no runtime
-dependencies.
+asked for, saves the results, and repeats until the model answers. The core, `@aum/core`, has
+no runtime dependencies: you can bring your own model and storage. `@aum/harness` adds what
+most agents need, built in: every model family [Pi](https://github.com/earendil-works/pi/tree/main/packages/ai)
+supports, coding tools, and sessions saved to disk.
+
+This README starts from the bare loop and builds up to a working coding agent. Each package
+also has its own README: [`@aum/core`](src/README.md) and [`@aum/harness`](packages/harness/README.md).
 
 What you get:
 
@@ -19,6 +23,10 @@ What you get:
   `blocked` or `failed`) instead of throwing.
 - **Events to follow a run.** Streamed text, tool progress and saved messages, for a screen or
   a log. A slow or broken observer never changes the run.
+- **42 model families, by name.** `openai/gpt-5-mini` or `anthropic/claude-sonnet-5-5`, with
+  reasoning at medium unless you choose another level.
+- **Coding tools that stay in their folder.** `read`, `write`, `edit` and `bash`, refusing any
+  path outside the workspace, and writing files whole or not at all.
 
 ## Requirements
 
@@ -29,14 +37,18 @@ npm install
 npm run typecheck
 ```
 
-Import everything from `src/index.ts`.
+Import the core from `@aum/core` and the harness from `@aum/harness/...`. Inside this repo those
+names point at the TypeScript source when Node runs with `--conditions=development`, which the
+npm scripts already pass; to run an example of your own, save it in the repo and run
+`node --conditions=development example.ts`. Once installed from npm, the same names load the
+built JavaScript.
 
 ## Quick start
 
 This runs offline: the "model" below always answers by echoing the last message.
 
 ```ts
-import { MemorySession, lineageContext, runAgent, textOf, userMessage, type Model } from "./src/index.ts";
+import { MemorySession, lineageContext, runAgent, textOf, userMessage, type Model } from "@aum/core";
 
 const echo: Model = {
     info: { adapter: "echo", provider: "local", model: "echo", capabilities: { tools: false, images: false } },
@@ -58,7 +70,7 @@ console.log(result.status, textOf(result.message?.content ?? []));    // complet
 console.log((await session.lineage()).map(entry => entry.message.role)); // [ 'user', 'assistant' ]
 ```
 
-Swap `echo` for a real model (see [Connecting a model](#connecting-a-model)) and the rest stays the same.
+Swap `echo` for a real model (see [Using a real model](#using-a-real-model)) and the rest stays the same.
 
 ## How a run works
 
@@ -81,7 +93,7 @@ anything, so `defineTool` runs your `parse` function first: bad arguments fail b
 does anything, and the model reads the error and can try again.
 
 ```ts
-import { ToolError, bind, defineTool } from "./src/index.ts";
+import { ToolError, bind, defineTool } from "@aum/core";
 
 const weather = defineTool({
     name: "weather",
@@ -116,7 +128,7 @@ const tools = [bind(weather)];
 Pass an `authorize` function in `bindings` to decide each call. `rules` builds one from a table:
 
 ```ts
-import { rules } from "./src/index.ts";
+import { rules } from "@aum/core";
 
 const authorize = rules(
     { read_file: "allow", write_file: "ask", delete_file: "deny" },
@@ -195,7 +207,7 @@ ahead of the store, and on restart it checks the saved entries before resuming.
 
 ```ts
 import { appendFile, readFile } from "node:fs/promises";
-import { journalSession, type Journal } from "./src/index.ts";
+import { journalSession, type Journal } from "@aum/core";
 
 const file = "session.jsonl";
 const journal: Journal = { append: entry => appendFile(file, JSON.stringify(entry) + "\n") };
@@ -208,7 +220,8 @@ const session = journalSession(journal, saved); // resumes where the file left o
 
 For real durability, sync each write to disk (`FileHandle.sync()`) before `append` resolves,
 and drop a half-written last line when loading. Saved entries are validated on load, and a
-damaged or out-of-order one fails with a message naming it.
+damaged or out-of-order one fails with a message naming it. The harness does all of this for
+you: see [Sessions on disk](#sessions-on-disk).
 
 ## Running inside an application
 
@@ -216,7 +229,7 @@ damaged or out-of-order one fails with a message naming it.
 read at your own pace.
 
 ```ts
-import { Agent, MemorySession } from "./src/index.ts";
+import { Agent, MemorySession } from "@aum/core";
 
 const agent = new Agent({ session: new MemorySession(), getBindings: () => bindings });
 
@@ -270,32 +283,95 @@ Your adapter translates in both directions:
 Providers that need their own data back on the next request (such as signed reasoning) can keep
 it in the assistant message's `adapterData`, under their own key.
 
-## Packages
+## Using a real model
 
-aum ships as four packages, one per kind of user. Dependencies point only toward the core.
+`@aum/harness/providers/pi` turns any model [Pi](https://github.com/earendil-works/pi/tree/main/packages/ai)
+supports into a `Model`. `PiCatalog` reads Pi's list of 42 families, and `load` takes a name:
 
-| Package | Folder | Status | What it is |
-| --- | --- | --- | --- |
-| `@aum/core` | `src/` | here | The loop, sessions, messages, and the tool and model ports. No runtime dependencies. |
-| `@aum/harness` | `packages/harness` | here, growing | An agent framework on the core, usable directly or built on. Ships with every model family [Pi](https://github.com/earendil-works/pi/tree/main/packages/ai) offers (42, pinned to `@earendil-works/pi-ai` 1.4.0), the coding tools and saved sessions. |
-| `@aum/cli` | | phase 2 | The coding agent for the terminal, built only on the harness. |
-| `@aum/app` | | phase 3 | The desktop app, after the CLI ships. |
+```ts
+import { PiCatalog } from "@aum/harness/providers/pi";
 
-What the harness holds today:
+const catalog = new PiCatalog();
+catalog.families().map(family => family.id);            // [ "amazon-bedrock", "ant-ling", "anthropic", ... ]
+catalog.modelsOf("openai").find(m => m.id === "gpt-5.4"); // { id, name, reasoning: [ "low", "medium", "high", "xhigh" ] }
 
-| Import | What it does |
+const { model, reasoning } = catalog.load("openai/gpt-5-mini");          // reasoning: "medium"
+const strong = catalog.load("openai/gpt-5.5", { reasoning: "high" }).model;
+```
+
+- **Keys.** Pi finds each family's key itself, for example `OPENAI_API_KEY` or
+  `ANTHROPIC_API_KEY` in the environment; `await catalog.hasCredentials("openai")` says whether
+  it found one. To use a key kept somewhere else, pass it: `catalog.load(name, { apiKey })`.
+- **Reasoning.** Every model starts at `medium`. A level the model doesn't take falls back to
+  medium, or the nearest it does take; a model that doesn't reason gets none.
+- **Mistakes.** A wrong family or model fails at `load`, naming the ones that exist, not at the
+  first reply.
+- **Failures.** Provider errors arrive as `ModelError` kinds: a 429 is a retryable
+  `rate_limit`, a bad key is `auth`, an overlong conversation is `unsupported`.
+- **Switching mid-conversation.** A model's saved reasoning is sent back only to that same
+  model, so changing models between replies drops it instead of failing.
+
+## Coding tools
+
+`@aum/harness/tools/coding` gives a model the four tools a coding agent needs, confined to one
+folder:
+
+```ts
+import { bind } from "@aum/core";
+import { createCodingTools } from "@aum/harness/tools/coding";
+
+const tools = createCodingTools("./my-project", { bash: { timeoutSeconds: 60 } }).map(bind);
+```
+
+| Tool | What it does |
 | --- | --- |
-| `@aum/harness/providers/pi` | `PiCatalog` lists families and models and loads one by `<family>/<model>`, with reasoning at medium unless you pick another level. `createPiModel` wraps one Pi model as a `Model`. |
-| `@aum/harness/tools/coding` | `read`, `write`, `edit` and `bash`, confined to one workspace folder. `createCodingTools(root)` returns all four. |
-| `@aum/harness/sessions/jsonl` | Sessions saved as JSONL files that survive a crash: `openSession(dir, id)` plugs into `Agent`. |
+| `read` | Returns a file 2,000 lines at a time, with a note saying where to continue; images come back as images. |
+| `write` | Creates or replaces a whole file, creating folders, keeping the file's mode, writing all or nothing. |
+| `edit` | Replaces exact text; each `oldText` must occur once, and several edits apply together or not at all. |
+| `bash` | Runs a command in the folder, stopping the whole process group on timeout or cancel; long output keeps its start and end. |
 
-Code imports by package name, never by path into another package. In this repo, scripts run Node
-with `--conditions=development`, which points each name at its TypeScript source, so nothing needs
-building to run or test; once installed, the same names resolve to the built `dist/` files.
+Any path that resolves outside the folder, including through a link, is refused. The tools
+don't decide whether they may run: pair them with an `authorize` such as
+`rules({ read: "allow" }, { otherwise: "ask", ask })`, so writes, edits and commands wait for a yes.
 
-`apps/demo.ts` wires them to `Agent` in about a hundred lines, to try the loop against real models.
-It reads an OpenAI key from `LLM_API_KEY` in `.env` (gitignored) and starts on `openai/gpt-5-mini`
-at medium reasoning:
+## Sessions on disk
+
+`@aum/harness/sessions/jsonl` saves a session as one JSON line per entry, synced to disk before
+the run moves on. A crash mid-write leaves half a line, which is cut off on the next load.
+
+```ts
+import { listSessions, newSessionId, openSession } from "@aum/harness/sessions/jsonl";
+
+const session = await openSession(".aum/sessions", newSessionId()); // or an existing id to continue
+const recent = await listSessions(".aum/sessions");                // most recent first
+```
+
+## Putting it together
+
+A coding agent in a few lines: a real model, the coding tools, a saved session, and approval
+before anything changes.
+
+```ts
+import { Agent, bind, lineageContext, rules } from "@aum/core";
+import { PiCatalog } from "@aum/harness/providers/pi";
+import { openSession } from "@aum/harness/sessions/jsonl";
+import { createCodingTools } from "@aum/harness/tools/coding";
+
+const { model } = new PiCatalog().load("openai/gpt-5-mini");
+const tools = createCodingTools(".").map(bind);
+const authorize = rules({ read: "allow" }, { otherwise: "ask", ask: async call => confirm(`Allow ${call.name}?`) });
+
+const agent = new Agent({
+    session: await openSession(".aum/sessions", "first"),
+    getBindings: () => ({ model, tools, context: lineageContext("You are a coding agent."), authorize }),
+});
+const run = agent.run("What does package.json say this project is called?");
+for await (const { event } of run.events) if (event.type === "model_delta") process.stdout.write(event.text);
+```
+
+`confirm` stands for however you ask a person. [`apps/demo.ts`](apps/demo.ts) is this, made
+interactive: it reads an OpenAI key from `LLM_API_KEY` in `.env` (gitignored), asks in the
+terminal before each write, edit or command, and switches model or reasoning mid-conversation.
 
 ```sh
 echo 'LLM_API_KEY=sk-...' > .env
@@ -306,19 +382,31 @@ npm run demo -- --list                              # model families; ● means 
 npm run demo -- --list openai                       # that family's models and reasoning levels
 ```
 
-`LLM_API_KEY` is used only for `openai/*` models. Other families find their keys the way Pi
-does, for example `ANTHROPIC_API_KEY` in the environment. In code, pass a key yourself with
-`catalog.load("openai/gpt-5-mini", { apiKey })` or `createPiModel({ ..., apiKey })`.
+Inside the demo, `/model <family>/<model> [level]` and `/reasoning <level>` switch from the next
+reply, since the bindings are read every cycle, and several can share a line, such as
+`/model openai/gpt-5.5 /reasoning high`. Sessions are saved in `.aum/sessions/`, the system
+prompt comes from [`prompts/coding.md`](prompts/coding.md) (`--system <file>`), and the tools
+work in the current folder (`--root <dir>`). `LLM_API_KEY` is used only for `openai/*` models.
 
-Reads run freely; writes, edits and commands ask first. `/model <family>/<model> [level]` and
-`/reasoning <level>` switch from the next reply, since the bindings are read every cycle; several
-can share a line, such as `/model openai/gpt-5.5 /reasoning high`.
-Sessions are saved in `.aum/sessions/`. The system prompt comes from `prompts/coding.md`
-(`--system <file>`), and the tools work in the current folder (`--root <dir>`).
+## Packages and phases
+
+aum ships as four packages, one per kind of user, built one phase at a time. Dependencies point
+only toward the core.
+
+| Phase | Package | Folder | For | Status |
+| --- | --- | --- | --- | --- |
+| 0 | [`@aum/core`](src/README.md) | `src/` | Building on the bare loop | Done |
+| 1 | [`@aum/harness`](packages/harness/README.md) | `packages/harness` | Building an agent, directly or on top | In progress: providers, tools and sessions are in |
+| 2 | `@aum/cli` | | Using the coding agent in a terminal | Next: built only on the harness |
+| 3 | `@aum/app` | | The desktop app | After the CLI ships |
+
+Phase 0 set up the packages: the core is `@aum/core`, the harness imports it by name, both
+build into `dist/`, and a check installs them outside the repo. Code imports by package name,
+never by path into another package.
 
 ## Scripts
 
 - `npm run typecheck`: check types across the core, packages, apps and checks, without writing output.
 - `npm run build`: compile the core and the harness into their `dist/` folders, in dependency order: JavaScript, type declarations and source maps.
 - `npm test`: run the offline checks in `checks/` (Pi's faux provider stands in for a real model), including one that packs the packages, installs them into an empty project outside the repo and runs them as plain JavaScript.
-- `npm run demo`: try the core loop with a Pi model and the coding tools.
+- `npm run demo`: the interactive coding agent above.
