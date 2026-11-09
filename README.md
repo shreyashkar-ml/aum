@@ -2,31 +2,28 @@
 
 A small TypeScript framework for building agents: a model that can ask for tools to be run.
 
-aum runs the loop. It sends the conversation to the model, saves its reply, runs the tools it
-asked for, saves the results, and repeats until the model answers. The core, `@aum/core`, has
-no runtime dependencies: you can bring your own model and storage. `@aum/harness` adds what
-most agents need, built in: every model family [Pi](https://github.com/earendil-works/pi/tree/main/packages/ai)
+aum runs the loop. It sends the conversation to the model, saves its reply, runs the tools it  
+asked for, saves the results, and repeats until the model answers. The core, `@aum/core`, has  
+no runtime dependencies: you can bring your own model and storage. `@aum/harness` adds what  
+most agents need, built in: every model family [Pi](https://github.com/earendil-works/pi/tree/main/packages/ai)  
 supports, coding tools, and sessions saved to disk.
-
-This README starts from the bare loop and builds up to a working coding agent. Each package
-also has its own README: [`@aum/core`](src/README.md) and [`@aum/harness`](packages/harness/README.md).
 
 What you get:
 
 - **Every step saved.** The model's request to run a tool is saved before the tool runs, and
-  every call gets exactly one result, even when it was refused, cancelled or cut off.
+every call gets exactly one result, even when it was refused, cancelled or cut off.
 - **Crash recovery.** If the process dies while a tool runs, the next run gives that call the
-  result `unknown`, so the model checks before repeating it.
+result `unknown`, so the model checks before repeating it.
 - **Checks before every call.** A tool can be switched off at any time, and an approver can
-  allow or refuse each call, including by asking a person.
+allow or refuse each call, including by asking a person.
 - **One result per run.** A run returns how it ended (`completed`, `cancelled`, `limited`,
-  `blocked` or `failed`) instead of throwing.
+`blocked` or `failed`) instead of throwing.
 - **Events to follow a run.** Streamed text, tool progress and saved messages, for a screen or
-  a log. A slow or broken observer never changes the run.
+a log. A slow or broken observer never changes the run.
 - **42 model families, by name.** `openai/gpt-5-mini` or `anthropic/claude-sonnet-5-5`, with
-  reasoning at medium unless you choose another level.
+reasoning at medium unless you choose another level.
 - **Coding tools that stay in their folder.** `read`, `write`, `edit` and `bash`, refusing any
-  path outside the workspace, and writing files whole or not at all.
+path outside the workspace, and writing files whole or not at all.
 
 ## Requirements
 
@@ -79,6 +76,7 @@ A run starts from the user's message and repeats one step, a cycle:
 1. Read the current `bindings()`: the model, the tools, how to build the request, and the approver.
 2. Build the request from the saved conversation and send it to the model.
 3. Check and save the reply. If it asks for tools, run each call in order, after checking it
+
    may run, and save all the results.
 4. Stop when the model answers without asking for a tool, or when a limit is reached.
 
@@ -117,11 +115,11 @@ const tools = [bind(weather)];
 
 - `execute` returns text, or content blocks when it has images to give back.
 - Throw `ToolError(message, output)` to fail while keeping the output that explains why; the
-  model sees both.
+model sees both.
 - `signal` fires when the run is cancelled, so long work can stop. `progress` reports to
-  whoever is watching.
+whoever is watching.
 - `bind(tool)` makes a tool that is always on. To switch one on and off, pass your own
-  `{ tool, isEnabled }`; it is checked just before each call.
+`{ tool, isEnabled }`; it is checked just before each call.
 
 ## Approval
 
@@ -268,17 +266,17 @@ interface Model {
 Your adapter translates in both directions:
 
 - **Request:** `request.context` holds the system prompt and the messages (`user`, `assistant`
-  with text and `tool_use` blocks, and `tool` with one result per call), `request.tools` the tool
-  definitions, and `request.settings` the temperature and output limit. Map them to your
-  provider's format. Include each result's status for anything that isn't a success, so the
-  model knows a call was refused or interrupted.
+with text and `tool_use` blocks, and `tool` with one result per call), `request.tools` the tool
+definitions, and `request.settings` the temperature and output limit. Map them to your
+provider's format. Include each result's status for anything that isn't a success, so the
+model knows a call was refused or interrupted.
 - **Execution:** pass `execution.signal` to your HTTP call so runs can be cancelled, and call
-  `execution.onProgress({ type: "text_delta", text })` as text streams in.
+`execution.onProgress({ type: "text_delta", text })` as text streams in.
 - **Completion:** return one assistant message (text, plus a `tool_use` block per call with a
-  unique `id`), the `finishReason` (`stop`, `tool_calls`, `length` or `blocked`) and `usage`.
+unique `id`), the `finishReason` (`stop`, `tool_calls`, `length` or `blocked`) and `usage`.
 - **Errors:** throw `ModelError(message, kind, retryable)` with kind `auth`, `rate_limit`,
-  `network`, `protocol` or `unsupported`, so callers can decide whether to retry. It reaches the
-  run's result.
+`network`, `protocol` or `unsupported`, so callers can decide whether to retry. It reaches the
+run's result.
 
 Providers that need their own data back on the next request (such as signed reasoning) can keep
 it in the assistant message's `adapterData`, under their own key.
@@ -300,16 +298,16 @@ const strong = catalog.load("openai/gpt-5.5", { reasoning: "high" }).model;
 ```
 
 - **Keys.** Pi finds each family's key itself, for example `OPENAI_API_KEY` or
-  `ANTHROPIC_API_KEY` in the environment; `await catalog.hasCredentials("openai")` says whether
-  it found one. To use a key kept somewhere else, pass it: `catalog.load(name, { apiKey })`.
+`ANTHROPIC_API_KEY` in the environment; `await catalog.hasCredentials("openai")` says whether
+it found one. To use a key kept somewhere else, pass it: `catalog.load(name, { apiKey })`.
 - **Reasoning.** Every model starts at `medium`. A level the model doesn't take falls back to
-  medium, or the nearest it does take; a model that doesn't reason gets none.
+medium, or the nearest it does take; a model that doesn't reason gets none.
 - **Mistakes.** A wrong family or model fails at `load`, naming the ones that exist, not at the
-  first reply.
+first reply.
 - **Failures.** Provider errors arrive as `ModelError` kinds: a 429 is a retryable
-  `rate_limit`, a bad key is `auth`, an overlong conversation is `unsupported`.
+`rate_limit`, a bad key is `auth`, an overlong conversation is `unsupported`.
 - **Switching mid-conversation.** A model's saved reasoning is sent back only to that same
-  model, so changing models between replies drops it instead of failing.
+model, so changing models between replies drops it instead of failing.
 
 ## Coding tools
 
@@ -388,21 +386,15 @@ reply, since the bindings are read every cycle, and several can share a line, su
 prompt comes from [`prompts/coding.md`](prompts/coding.md) (`--system <file>`), and the tools
 work in the current folder (`--root <dir>`). `LLM_API_KEY` is used only for `openai/*` models.
 
-## Packages and phases
+## Packages
 
-aum ships as four packages, one per kind of user, built one phase at a time. Dependencies point
-only toward the core.
+| Package | Folder | Use it to |
+| --- | --- | --- |
+| `@aum/core` | [`src/`](src) | Build on the bare loop with your own model, tools and storage |
+| `@aum/harness` | [`packages/harness/`](packages/harness) | Build a coding agent with models, tools and saved sessions included |
 
-| Phase | Package | Folder | For | Status |
-| --- | --- | --- | --- | --- |
-| 0 | [`@aum/core`](src/README.md) | `src/` | Building on the bare loop | Done |
-| 1 | [`@aum/harness`](packages/harness/README.md) | `packages/harness` | Building an agent, directly or on top | In progress: providers, tools and sessions are in |
-| 2 | `@aum/cli` | | Using the coding agent in a terminal | Next: built only on the harness |
-| 3 | `@aum/app` | | The desktop app | After the CLI ships |
-
-Phase 0 set up the packages: the core is `@aum/core`, the harness imports it by name, both
-build into `dist/`, and a check installs them outside the repo. Code imports by package name,
-never by path into another package.
+Each package imports the others only by name, so `@aum/core` stays dependency-free and works
+without the harness.
 
 ## Scripts
 
