@@ -27,7 +27,7 @@ path outside the workspace, and writing files whole or not at all.
 
 ## Requirements
 
-Node.js 22.18 or newer, which runs TypeScript directly.
+Node.js 22.21 or newer, which runs TypeScript directly and can send requests through a proxy.
 
 ```sh
 npm install
@@ -308,6 +308,10 @@ first reply.
 `rate_limit`, a bad key is `auth`, an overlong conversation is `unsupported`.
 - **Switching mid-conversation.** A model's saved reasoning is sent back only to that same
 model, so changing models between replies drops it instead of failing.
+- **Behind a proxy.** Node's `fetch`, which Pi uses, ignores `HTTPS_PROXY` unless told
+otherwise. On a network that only reaches the internet through a proxy, set
+`NODE_USE_ENV_PROXY=1` (Node 22.21 or newer); a proxy that inspects TLS also needs its
+certificate in `NODE_EXTRA_CA_CERTS`. Without these, requests time out or fail to connect.
 
 ## Coding tools
 

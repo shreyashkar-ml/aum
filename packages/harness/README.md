@@ -188,6 +188,18 @@ what to do:
 | `unsupported` | The conversation is too long for the model | no |
 | `protocol` | The provider sent something unexpected | no |
 
+**Behind a proxy.** Pi sends requests with Node's built-in `fetch`, which ignores `HTTPS_PROXY`
+by default. If your network reaches the internet only through a proxy, requests time out or
+fail to connect until Node is told to use it. Set `NODE_USE_ENV_PROXY=1` (Node 22.21 or newer; it
+reads `HTTPS_PROXY`, `HTTP_PROXY` and `NO_PROXY`):
+
+```sh
+NODE_USE_ENV_PROXY=1 node agent.js
+```
+
+A proxy that inspects TLS traffic also needs its certificate:
+`NODE_EXTRA_CA_CERTS=/path/to/proxy-ca.pem`.
+
 ## Going further
 
 The pieces above are made of smaller ones, which you can use on their own.
