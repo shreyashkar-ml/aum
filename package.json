@@ -4,7 +4,7 @@
   "type": "module",
   "description": "The aum agent framework: the loop, sessions, and the tool and model ports. No runtime dependencies.",
   "engines": {
-    "node": ">=22.18.0"
+    "node": ">=22.21.0"
   },
   "exports": {
     ".": {

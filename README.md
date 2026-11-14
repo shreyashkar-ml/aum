@@ -27,7 +27,7 @@ path outside the workspace, and writing files whole or not at all.
 
 ## Requirements
 
-Node.js 22.18 or newer, which runs TypeScript directly.
+Node.js 22.21 or newer, which runs TypeScript directly and can send requests through a proxy.
 
 ```sh
 npm install
